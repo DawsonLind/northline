@@ -74,8 +74,8 @@ export function OperatorPanel() {
         await new Promise((resolve) => setTimeout(resolve, remaining));
       }
       setPending(null);
-      await reloadStatus();
       setPreviewToken((token) => token + 1);
+      await reloadStatus();
     }
   }
 

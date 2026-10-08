@@ -10,21 +10,24 @@ export function useJson<T>(url: string, intervalMs = 4000) {
 
   useEffect(() => {
     let cancelled = false;
+    let requestId = 0;
 
     async function load() {
+      const id = ++requestId;
       try {
         const response = await fetch(url, { cache: "no-store" });
         if (!response.ok) {
           throw new Error(`${response.status}`);
         }
         const json = (await response.json()) as T;
-        if (!cancelled) {
+        // A slower in-flight poll must not overwrite a newer reload.
+        if (!cancelled && id === requestId) {
           setData(json);
           setError(null);
           setLoading(false);
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && id === requestId) {
           setError("Unable to reach the network feed");
           setLoading(false);
         }
