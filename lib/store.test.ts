@@ -53,6 +53,27 @@ describe("demo break/reset", () => {
     );
   });
 
+  it("break then reset: status is disrupted after break and healthy after reset", () => {
+    resetService();
+
+    injectBreak();
+    expect(getStatus()).toEqual({ broken: true, mode: "disruption" });
+    const disrupted = getStationBoard("harborfront");
+    expect(disrupted?.banner.level).toBe("disruption");
+    expect(
+      disrupted?.arrivals.some((row) => row.destination === "SIGNAL LOST"),
+    ).toBe(true);
+
+    resetService();
+    expect(getStatus()).toEqual({ broken: false, mode: "normal" });
+    const healthy = getStationBoard("harborfront");
+    expect(healthy?.banner.level).toBe("normal");
+    expect(
+      healthy?.arrivals.every((row) => row.destination !== "SIGNAL LOST"),
+    ).toBe(true);
+    expect(healthy?.boardError).toBeUndefined();
+  });
+
   it("reset restores the healthy baseline and is idempotent", () => {
     resetService();
     injectBreak();

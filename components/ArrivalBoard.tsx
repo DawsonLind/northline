@@ -1,16 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { LineBadge } from "@/components/LineBadge";
 import { StatusBanner } from "@/components/StatusBanner";
 import { useJson } from "@/lib/use-json";
 import type { StationBoard } from "@/lib/types";
 
-export function ArrivalBoard({ stationId }: { stationId: string }) {
-  const { data, error, loading } = useJson<StationBoard>(
+export function ArrivalBoard({
+  stationId,
+  embedded = false,
+  refreshToken = 0,
+}: {
+  stationId: string;
+  embedded?: boolean;
+  refreshToken?: number;
+}) {
+  const { data, error, loading, reload } = useJson<StationBoard>(
     `/api/stations/${stationId}`,
-    3000,
+    embedded ? 2000 : 3000,
   );
+
+  useEffect(() => {
+    if (refreshToken === 0) return;
+    void reload();
+  }, [refreshToken, reload]);
 
   if (loading && !data) {
     return <p className="text-[var(--muted)]">Loading board…</p>;
@@ -27,19 +41,27 @@ export function ArrivalBoard({ stationId }: { stationId: string }) {
     );
   }
 
+  const Title = embedded ? "h2" : "h1";
+
   return (
-    <div className="space-y-6">
+    <div className={embedded ? "space-y-4" : "space-y-6"}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <Link
-            href="/"
-            className="text-xs uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--amber)]"
+          {embedded ? null : (
+            <Link
+              href="/"
+              className="text-xs uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--amber)]"
+            >
+              ← All stations
+            </Link>
+          )}
+          <Title
+            className={`font-semibold tracking-[0.08em] uppercase ${
+              embedded ? "text-xl" : "mt-2 text-3xl"
+            }`}
           >
-            ← All stations
-          </Link>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[0.08em] uppercase">
             {data.station.name}
-          </h1>
+          </Title>
           <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
             Zone {data.station.zone}
             {data.station.interchange ? " · Interchange" : ""}
