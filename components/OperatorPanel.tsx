@@ -32,6 +32,7 @@ export function OperatorPanel() {
 
   async function post(path: "/api/demo/break" | "/api/demo/reset") {
     const action: ActionName = path.endsWith("break") ? "break" : "reset";
+    const started = performance.now();
     setPending(action);
     setResult(null);
     try {
@@ -66,6 +67,12 @@ export function OperatorPanel() {
         detail: `${label(action)} failed. The demo API did not respond.`,
       });
     } finally {
+      // The in-memory demo API answers before the next paint, so hold the
+      // pending label long enough for the operator to see the in-flight state.
+      const remaining = 350 - (performance.now() - started);
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
       setPending(null);
       await reloadStatus();
       setPreviewToken((token) => token + 1);
